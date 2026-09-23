@@ -25,7 +25,7 @@ def ejecutar_accion_simulada(accion: dict) -> None:
     elif tipo == "detener":
         print("🤖 [SIMULADO] Deteniéndose.")
 
-    print(f"🔊 [TTS simulado] \"{accion['respuesta_hablada']}\"")
+    print(f"🔊 Aries dice: \"{accion['respuesta_hablada']}\"")
 
 
 def main():
