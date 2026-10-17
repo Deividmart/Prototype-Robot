@@ -21,10 +21,12 @@ Al final hay una tabla de [problemas comunes](#problemas-comunes) y lo que cambi
 1. Entra a <https://github.com/Deividmart/Prototype-Robot> (si el repositorio es privado, David
    te tiene que agregar como colaborador).
 2. Botón verde **Code** → **Download ZIP**.
-3. Descomprime el ZIP (clic derecho → **Extraer todo**), por ejemplo en `Documentos`.
+3. Crea la carpeta `C:\Aries` y descomprime ahí el ZIP (clic derecho → **Extraer todo**).
 
-Te queda una carpeta `Prototype-Robot-main`. Adentro está la carpeta **`robot-ia`**: ahí
-pasa todo.
+⚠️ **No lo pongas en el Escritorio, Documentos ni ninguna carpeta de OneDrive**: la instalación
+descarga unos 10 GB ahí adentro y OneDrive intentaría subirlos a la nube.
+
+Busca la carpeta **`robot-ia`** (queda dentro de `Prototype-Robot-main`): ahí pasa todo.
 
 > **Cómo abrir una terminal en una carpeta:** abre la carpeta en el Explorador de archivos,
 > haz clic derecho en un espacio vacío y elige **Abrir en Terminal**. Todos los comandos de
@@ -32,7 +34,26 @@ pasa todo.
 
 ## 2. Instalar todo
 
-En la carpeta `robot-ia`, haz **doble clic en `instalar.bat`**.
+Windows marca todo lo que sale de un ZIP descargado como "de internet", y **Control
+Inteligente de Aplicaciones** bloquea esos archivos `.bat`. Primero quita esa marca: abre una
+terminal en la carpeta `robot-ia` y escribe:
+
+```
+Get-ChildItem -Recurse | Unblock-File
+```
+
+No desactives Control Inteligente de Aplicaciones: después Windows no deja volver a activarlo.
+
+Ahora, en la carpeta `robot-ia`, haz **doble clic en `instalar.bat`**. Si Windows lo sigue
+bloqueando, corre el instalador directo desde la terminal:
+
+```
+powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1
+```
+
+Si aun así algo queda bloqueado, baja el proyecto con git en lugar del ZIP (lo que baja git no
+queda marcado): `winget install -e --id Git.Git`, abre una terminal nueva en `C:\Aries` y escribe
+`git clone https://github.com/Deividmart/Prototype-Robot.git`.
 
 Instala Python, Ollama con Gemma 3 4B, Whisper con soporte para la tarjeta gráfica, las voces,
 ffmpeg y las herramientas del ESP32. Tarda entre 20 y 40 minutos (descarga unos 10 GB).
@@ -197,6 +218,7 @@ Para volver al micrófono del robot: Ctrl+C y `.\iniciar.bat robot`.
 |---|---|
 | `arduino-cli board list` no muestra ningún puerto | Prueba otro cable USB (el tuyo puede ser solo de carga) u otro puerto. Si sigue sin aparecer, instala el driver **CP210x Universal Windows Driver** de Silicon Labs (<https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers>) y vuelve a enchufar el ESP32. |
 | "Access denied" o "port is busy" al subir el firmware | Tienes el monitor abierto en otra terminal (u otro programa usando el puerto, como Arduino IDE). Ciérralo. |
+| "Control Inteligente de Aplicaciones ha bloqueado un archivo" | Falta quitar la marca de internet: `Get-ChildItem -Recurse \| Unblock-File` en la carpeta `robot-ia` (ver paso 2). |
 | `instalar.bat` dice que no encuentra winget | Instala **Instalador de aplicación** desde la Microsoft Store y vuelve a correrlo. |
 | `instalar.bat` dice que no encuentra el driver de NVIDIA | Instálalo desde <https://www.nvidia.com/drivers>, reinicia y vuelve a correrlo. |
 | Dice "no encuentro ..." después de instalarlo | Cierra la ventana y vuelve a hacer doble clic en `instalar.bat`. |
