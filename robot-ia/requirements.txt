@@ -1,0 +1,10 @@
+# Librerías de Python del cerebro de Aries (las instala setup.sh).
+# Probado con: openai-whisper 20250625, Flask 3.1.3, flask-sock 0.7.0, piper-tts 1.8.0,
+# silero-vad 6.2.3, torch 2.13.0, Python 3.14 en Ubuntu 26.04.
+openai-whisper>=20240930
+Flask>=3.0
+flask-sock>=0.7
+requests>=2.31
+numpy
+piper-tts>=1.3
+silero-vad>=5.1

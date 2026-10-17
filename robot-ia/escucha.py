@@ -82,12 +82,12 @@ class Aries:
         self.mudo = mudo
         self.atento_hasta = -1.0
 
-    def manejar_frase(self, audio: np.ndarray) -> bool:
-        """Procesa una frase. Devuelve True si Aries respondió."""
+    def decidir(self, audio: np.ndarray) -> dict | None:
+        """Transcribe una frase hablada y decide la acción. None si hay que ignorarla."""
         t0 = time.time()
         texto, idioma = oido.transcribir(audio)
         if not texto:
-            return False
+            return None
 
         texto = _ALIAS_NOMBRE.sub(NOMBRE_ROBOT, texto)
         con_nombre = bool(_ALIAS_NOMBRE.search(texto))
@@ -95,20 +95,35 @@ class Aries:
 
         if not (con_nombre or atento):
             print(f'   (ignorado, no dijo "{NOMBRE_ROBOT}"): {texto}', flush=True)
-            return False
+            return None
 
         accion = preguntar(texto, idioma)
         # Durante la ventana sin nombre, algo que no es un comando suele ser charla de otros: mejor callar
         if accion["accion"] == "desconocido" and not con_nombre:
             print(f"   (ignorado, no es un comando): {texto}", flush=True)
-            return False
+            return None
 
         print(f'🎙️  Oí ({idioma}): "{texto}"  [{time.time() - t0:.2f}s]', flush=True)
-        ejecutar_accion_simulada(accion)
+        return accion
+
+    def decidir_texto(self, texto: str) -> dict:
+        """Comando escrito (monitor serial del ESP32): no hace falta decir el nombre."""
+        accion = preguntar(_ALIAS_NOMBRE.sub(NOMBRE_ROBOT, texto))
+        print(f'⌨️  Escribieron: "{texto}"', flush=True)
+        return accion
+
+    def responder(self, accion: dict, enviar_al_robot=None) -> None:
+        """Manda la acción al robot (si hay uno conectado) y la dice en voz alta."""
+        if enviar_al_robot is None:
+            ejecutar_accion_simulada(accion)
+        else:
+            enviar_al_robot(accion)
+            print(f'📡 Al robot: {accion["accion"]} {accion["parametro"]:g}', flush=True)
+            print(f'🔊 Aries dice: "{accion["respuesta_hablada"]}"', flush=True)
+        # Primero se manda la acción: así el robot se mueve mientras habla
         if not self.mudo:
             voz.hablar(accion["respuesta_hablada"], accion["idioma"])
         self.atento_hasta = self.reloj() + VENTANA_SEG
-        return True
 
 
 class FuenteMicrofonoPC:
@@ -172,7 +187,9 @@ def main():
             frase = oyente.procesar(bloque)
             if frase is None:
                 continue
-            if aries.manejar_frase(frase):
+            accion = aries.decidir(frase)
+            if accion is not None:
+                aries.responder(accion)
                 if not args.mudo:
                     time.sleep(COLA_ECO_SEG)
                 fuente.descartar_pendiente()

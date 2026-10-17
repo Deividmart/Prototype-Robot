@@ -142,6 +142,11 @@ def _extraer_json(texto: str) -> dict:
     return json.loads(match.group(0))
 
 
+def precargar() -> None:
+    """Carga Gemma en la GPU de entrada; si no, el primer comando tarda ~15 s en responder."""
+    requests.post(OLLAMA_URL, json={"model": MODEL, "prompt": "", "keep_alive": "2h"}, timeout=60)
+
+
 def preguntar(comando_usuario: str, idioma: str | None = None) -> dict:
     """
     Envía el comando del usuario a Gemma y devuelve un dict validado:

@@ -4,6 +4,8 @@
 const int PIN_SCK = 32;
 const int PIN_WS = 25;
 const int PIN_SD = 33;
+// El pin 3V3 queda tapado en la protoboard: el micrófono se alimenta desde este GPIO (consume ~1.4 mA)
+const int PIN_VDD = 27;
 
 const int SAMPLE_RATE = 16000;
 const int BLOQUE = 512;
@@ -13,6 +15,8 @@ int32_t muestras[BLOQUE];
 
 void setup() {
   Serial.begin(115200);
+  pinMode(PIN_VDD, OUTPUT);
+  digitalWrite(PIN_VDD, HIGH);
   delay(1000);
 
   i2s.setPins(PIN_SCK, PIN_WS, -1, PIN_SD);
