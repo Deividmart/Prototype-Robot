@@ -15,8 +15,10 @@ Uso:
 """
 import argparse
 import collections
+import queue
 import re
 import subprocess
+import sys
 import time
 
 import numpy as np
@@ -126,7 +128,7 @@ class Aries:
         self.atento_hasta = self.reloj() + VENTANA_SEG
 
 
-class FuenteMicrofonoPC:
+class _MicrofonoLinux:
     """Micrófono por defecto de la PC vía ALSA/PipeWire."""
 
     def __init__(self):
@@ -150,6 +152,32 @@ class FuenteMicrofonoPC:
             if len(datos) < BLOQUE * 2:
                 return
             yield np.frombuffer(datos, dtype=np.int16).astype(np.float32) / 32768.0
+
+
+class _MicrofonoWindows:
+    """Micrófono predeterminado de Windows (Configuración > Sonido > Entrada)."""
+
+    def __init__(self):
+        import sounddevice as sd
+
+        self.cola: queue.Queue[np.ndarray] = queue.Queue()
+        self.stream = sd.InputStream(
+            samplerate=TASA, channels=1, dtype="float32", blocksize=BLOQUE,
+            callback=lambda datos, *_: self.cola.put(datos[:, 0].copy()),
+        )
+        self.stream.start()
+
+    def descartar_pendiente(self) -> None:
+        """Tira el audio acumulado mientras Aries pensaba y hablaba (incluye su propio eco)."""
+        while not self.cola.empty():
+            self.cola.get_nowait()
+
+    def __iter__(self):
+        while True:
+            yield self.cola.get()
+
+
+FuenteMicrofonoPC = _MicrofonoWindows if sys.platform == "win32" else _MicrofonoLinux
 
 
 class FuenteArchivo:

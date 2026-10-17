@@ -2,7 +2,9 @@
 Voz de Aries: convierte texto en audio con Piper y lo reproduce por la salida de audio
 de la PC (el parlante Bluetooth montado en el robot, si está conectado).
 """
+import os
 import subprocess
+import sys
 import tempfile
 import threading
 import wave
@@ -51,9 +53,25 @@ def hablar(texto: str, idioma: str) -> None:
     """Genera y reproduce la frase; bloquea hasta que termina de sonar."""
     if not texto:
         return
-    with _turno, tempfile.NamedTemporaryFile(suffix=".wav") as tmp:
-        sintetizar(texto, idioma, tmp.name)
-        subprocess.run(["pw-play", tmp.name], check=False)
+    # En Windows un archivo temporal abierto no se puede reabrir por nombre: se usa una ruta suelta
+    fd, ruta = tempfile.mkstemp(suffix=".wav")
+    os.close(fd)
+    try:
+        with _turno:
+            sintetizar(texto, idioma, ruta)
+            _reproducir(ruta)
+    finally:
+        os.remove(ruta)
+
+
+def _reproducir(ruta: str) -> None:
+    """Reproduce un WAV por la salida de audio predeterminada y espera a que termine."""
+    if sys.platform == "win32":
+        import winsound
+
+        winsound.PlaySound(ruta, winsound.SND_FILENAME)
+    else:
+        subprocess.run(["pw-play", ruta], check=False)
 
 
 def hablar_en_segundo_plano(texto: str, idioma: str) -> None:

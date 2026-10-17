@@ -77,12 +77,16 @@ def comando():
 
     archivo = request.files["audio"]
 
-    with tempfile.NamedTemporaryFile(suffix=".wav") as tmp:
-        archivo.save(tmp.name)
-
+    # En Windows un archivo temporal abierto no se puede reabrir por nombre: se usa una ruta suelta
+    fd, ruta = tempfile.mkstemp(suffix=".wav")
+    os.close(fd)
+    try:
+        archivo.save(ruta)
         t0 = time.time()
-        texto, idioma = oido.transcribir(tmp.name)
+        texto, idioma = oido.transcribir(ruta)
         t_stt = time.time() - t0
+    finally:
+        os.remove(ruta)
 
     if not texto:
         return jsonify({"error": "No se transcribió ningún texto del audio"}), 422
