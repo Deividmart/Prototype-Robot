@@ -1,0 +1,10 @@
+__pycache__/
+*.log
+*.wav
+robot-env/
+
+# credenciales WiFi del ESP32
+secrets.h
+
+# modelos de voz de Piper (pesados, se descargan)
+voces/
