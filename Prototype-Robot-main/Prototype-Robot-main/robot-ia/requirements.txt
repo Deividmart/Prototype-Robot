@@ -1,0 +1,15 @@
+# Librerías de Python del cerebro de Aries (las instalan setup.sh en Ubuntu e instalar.bat en Windows).
+# En Windows, PyTorch con CUDA se instala aparte (ver setup.ps1): el de PyPI no usa la tarjeta gráfica.
+# Probado con: openai-whisper 20250625, Flask 3.1.3, flask-sock 0.7.0, piper-tts 1.8.0,
+# silero-vad 6.2.3, torch 2.13.0, Python 3.14 en Ubuntu 26.04.
+openai-whisper>=20240930
+Flask>=3.0
+flask-sock>=0.7
+requests>=2.31
+numpy
+piper-tts>=1.3
+silero-vad>=5.1
+# Gráficas de los movimientos (graficas.py)
+matplotlib>=3.8
+# Micrófono de la computadora en Windows (en Linux se usa arecord)
+sounddevice>=0.4; sys_platform == "win32"
