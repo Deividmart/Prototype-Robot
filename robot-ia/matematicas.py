@@ -166,6 +166,13 @@ def _resolver_ecuacion(izquierda: str, derecha: str, idioma: str) -> list[str]:
     return [f"{incognita} {'equals' if idioma == 'en' else 'igual a'} {_decir(s, idioma)}" for s in soluciones]
 
 
+def _comparar(izquierda: str, derecha: str, idioma: str) -> tuple[str, str]:
+    """'¿la raíz de 144 es igual a la raíz de 14?': dos lados sin incógnita -> ("si"/"no", los dos valores)."""
+    a, b = _leer(izquierda), _leer(derecha)
+    iguales = sp.simplify(a - b) == 0
+    return ("comparacion_si" if iguales else "comparacion_no"), f"{_decir(a, idioma)}|{_decir(b, idioma)}"
+
+
 def _lista(partes: list[str], idioma: str) -> str:
     if len(partes) == 1:
         return partes[0]
@@ -183,8 +190,12 @@ def calcular(expresion: str, idioma: str = "es") -> tuple[str, str] | None:
         if " to " in texto:
             izquierda, derecha = texto.split(" to ", 1)
             return "conversion", _convertir(izquierda, derecha, idioma)
+        if "==" in texto:
+            return _comparar(*texto.split("==", 1), idioma)
         if texto.count("=") == 1:
             izquierda, derecha = texto.split("=")
+            if not (_leer(izquierda) - _leer(derecha)).free_symbols:  # sin incógnita: es una comparación
+                return _comparar(izquierda, derecha, idioma)
             soluciones = _resolver_ecuacion(izquierda, derecha, idioma)
             return ("ecuacion", _lista(soluciones, idioma)) if soluciones else ("sin_solucion", "")
         resultado = _leer(texto)
@@ -194,7 +205,7 @@ def calcular(expresion: str, idioma: str = "es") -> tuple[str, str] | None:
         if "integrate" in texto and not resultado.is_number:
             frase += " plus a constant" if idioma == "en" else " más una constante"
         return "valor", frase
-    except (NoEntendi, TypeError, ValueError, NotImplementedError, ZeroDivisionError):
+    except (NoEntendi, TypeError, ValueError, NotImplementedError, ZeroDivisionError, AttributeError):
         return None
 
 
@@ -213,6 +224,12 @@ def frase_resultado(calculo: tuple[str, str] | None, idioma: str = "es", unidad:
         if en:
             return previo + f"The solution{'s are' if varias else ' is'} {resultado}."
         return previo + f"La{'s soluciones son' if varias else ' solución es'} {resultado}."
+    if tipo.startswith("comparacion"):
+        a, b = resultado.split("|")
+        if tipo == "comparacion_si":
+            return previo + (f"Yes, both are equal: {a}." if en else f"Sí, son iguales: los dos dan {a}.")
+        return previo + (f"No, they are not equal: one is {a} and the other is {b}." if en
+                         else f"No, no son iguales: uno da {a} y el otro {b}.")
     if tipo == "conversion":
         return previo + (f"That's {resultado}." if en else f"Son {resultado}.")
     con_unidad = f"{resultado} {unidad}".strip()

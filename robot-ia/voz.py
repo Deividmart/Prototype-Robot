@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import wave
 from pathlib import Path
 
@@ -23,6 +24,8 @@ REFUERZO = 2.5
 _voces_cargadas: dict[str, PiperVoice] = {}
 # Una frase a la vez: si llegan dos comandos seguidos, la segunda espera a que termine la primera
 _turno = threading.Lock()
+# callar() la activa: corta la frase que está sonando ("Aries, para" mientras habla)
+_callar = threading.Event()
 
 
 def _voz(idioma: str) -> PiperVoice:
@@ -58,20 +61,38 @@ def hablar(texto: str, idioma: str) -> None:
     os.close(fd)
     try:
         with _turno:
+            _callar.clear()
             sintetizar(texto, idioma, ruta)
             _reproducir(ruta)
     finally:
         os.remove(ruta)
 
 
+def callar() -> None:
+    """Corta lo que esté diciendo (si no está hablando, no hace nada)."""
+    _callar.set()
+
+
 def _reproducir(ruta: str) -> None:
-    """Reproduce un WAV por la salida de audio predeterminada y espera a que termine."""
+    """Reproduce un WAV por la salida de audio predeterminada; espera a que termine o a callar()."""
+    with wave.open(ruta) as w:
+        duracion = w.getnframes() / w.getframerate()
     if sys.platform == "win32":
         import winsound
 
-        winsound.PlaySound(ruta, winsound.SND_FILENAME)
+        winsound.PlaySound(ruta, winsound.SND_FILENAME | winsound.SND_ASYNC)
+        # La reproducción asíncrona empieza un poco después: se le da un margen al final
+        if _callar.wait(duracion + 0.3):
+            winsound.PlaySound(None, 0)  # corta el sonido
     else:
-        subprocess.run(["pw-play", ruta], check=False)
+        proceso = subprocess.Popen(["pw-play", ruta])
+        inicio = time.monotonic()
+        while proceso.poll() is None:
+            if _callar.wait(0.05):
+                proceso.kill()
+                break
+            if time.monotonic() - inicio > duracion + 2:
+                break
 
 
 def hablar_en_segundo_plano(texto: str, idioma: str) -> None:

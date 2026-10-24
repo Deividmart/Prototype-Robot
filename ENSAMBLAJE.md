@@ -301,6 +301,29 @@ otros colores = señales.
 
 ### Pines del ESP32
 
+> **Cambio del 21/10/2026.** La rueda izquierda fallaba a ratos: los resortes de la protoboard de los
+> módulos en las filas del lado A del TB6612 hacían mal contacto. El TB6612 pasó a la **protoboard
+> del ESP32, filas 53 a 60** (VM y PWMA en la 60), y AIN1 y AIN2 pasaron a **D32** (al aire) y **D15**.
+> En esa protoboard: lado izquierdo 60b VM → 16a del INA219, 59b VCC → riel 3,3 V, 58b y 53b GND →
+> riel GND, 57b/56b motor izquierdo rojo/negro, 55b/54b motor derecho negro/rojo; lado derecho 60h PWMA
+> ← fila 16 (D19), 59h AIN2 ← fila 23 (D15), 58h AIN1 ← D32, 57h STBY ← fila 11 (D23), 56h BIN1 ← fila 20
+> (RX2), 55h BIN2 ← fila 21 (D4), 54h PWMB ← fila 19 (TX2). Las tablas de filas 3 a 10 de más abajo
+> quedan como historia.
+>
+> **Energía (21/10/2026).** Con pilas cansadas el voltaje cae de 5,5 V a ~4 V al moverse, y como el ESP32
+> toma la energía de las mismas pilas (VIN), se reiniciaba al arrancar los motores ("Brownout"). El
+> firmware ahora arranca los motores de a poco y no se reinicia por bajones cortos, pero lo de fondo es:
+> pilas nuevas, o mejor, **alimentar el ESP32 con una batería USB (power bank) por su USB-C** y quitar
+> el cable 55c → VIN, así las pilas quedan solo para los motores (los GND siguen unidos por los rieles).
+>
+> **Pilas de litio (22/10/2026).** Las 4 AA se cambian por un portapilas de **2 pilas 18650 en serie**
+> (7,4 V; 8,4 V cargadas) que trae su propio interruptor: el interruptor del chasis se quita, el rojo del
+> portapilas va a **55a** y el negro al riel **GND**. El firmware recorta la potencia para que los
+> motores (de 6 V) reciban en promedio 6 V como máximo, y si las pilas bajan de 6,4 V con el robot quieto
+> deja de moverse y la matriz muestra **BAT**: hay que cargarlas (fuera del robot, con su cargador).
+> Si se vuelve a las 4 pilas AA, hay que poner `PILAS_DE_LITIO = false` en el firmware (si no, con 5,5 V
+> se cree "litio descargado" y no se mueve).
+
 | Pin del ESP32 | Va a | Para qué |
 |---|---|---|
 | **3V3** | Riel de 3,3 V | Alimenta sensores y la lógica del TB6612 |
@@ -316,17 +339,17 @@ otros colores = señales.
 | **D34** | D0 del encoder izquierdo | Cuenta ranuras (pin solo de entrada) |
 | **D35** | D0 del encoder derecho | Cuenta ranuras (pin solo de entrada) |
 | **D19** | TB6612 PWMA | Velocidad del motor izquierdo |
-| **D18** | TB6612 AIN1 | Sentido del motor izquierdo |
-| **D5** | TB6612 AIN2 | Sentido del motor izquierdo |
+| **D32** | TB6612 AIN1 | Sentido del motor izquierdo (era D18) |
+| **D15** | TB6612 AIN2 | Sentido del motor izquierdo (era D5) |
 | **TX2** (GPIO 17) | TB6612 PWMB | Velocidad del motor derecho |
 | **RX2** (GPIO 16) | TB6612 BIN1 | Sentido del motor derecho |
 | **D4** | TB6612 BIN2 | Sentido del motor derecho |
 | **D23** | TB6612 STBY | Enciende o apaga todo el driver |
 | **D13** | Matrices DIN | Datos de la cara |
 | **D14** | Matrices CLK | Reloj de la cara |
-| **D15** | Matrices CS | Avisa a las matrices que les llegan datos |
+| **D27** | Matrices CS | Avisa a las matrices que les llegan datos (era el VDD del micrófono, que ya no está) |
 
-**Libres** para más sensores: D2, D34, D35, VP (36) y VN (39) (VP y VN solo de entrada).
+**Libres** para más sensores: D2, D5, D18, D25, D26, D33, D34, D35, VP (36) y VN (39) (VP y VN solo de entrada).
 **No usen**: TX0 y RX0 (son del cable USB) ni D12 (si está en alto al encender, el ESP32 no arranca).
 
 ### Cada módulo, pin por pin
@@ -380,7 +403,7 @@ la punta que dice DIN (la otra punta dice DOUT y queda libre):
 | VCC | Riel 3,3 V |
 | GND | Riel GND |
 | DIN | D13 |
-| CS | D15 |
+| CS | D27 |
 | CLK | D14 |
 
 Van a 3,3 V con brillo bajo (`BRILLO = 1` en el firmware): a más brillo consumen más y el ESP32

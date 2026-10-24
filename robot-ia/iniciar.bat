@@ -1,10 +1,11 @@
 @echo off
-rem Enciende el cerebro de Aries en Windows.
-rem   iniciar.bat          pregunta que microfono usar
-rem   iniciar.bat robot    microfono del robot (INMP441 en el ESP32)
-rem   iniciar.bat pc       microfono de la computadora (si el del robot falla)
+rem Enciende a Aries en Windows: abre la ventana de las graficas en vivo y deja esta terminal
+rem mostrando lo que Aries escucha, dice y le manda al robot.
+rem   iniciar.bat          microfono de la computadora (el robot ya no tiene el suyo)
+rem   iniciar.bat robot    microfono del robot (INMP441 en el ESP32), si algun dia se lo vuelven a poner
 setlocal
 cd /d "%~dp0"
+title Aries - lo que escucha
 rem Para que los emojis y las tildes del servidor se vean bien en la consola
 set PYTHONUTF8=1
 chcp 65001 >nul
@@ -16,25 +17,16 @@ if not exist "robot-env\Scripts\python.exe" (
 )
 
 set "MIC=%~1"
-if not "%MIC%"=="" goto revisar
-
-echo Que microfono quieres usar?
-echo   1^) El del robot
-echo   2^) El de la computadora ^(si el del robot no funciona^)
-set /p "OPCION=Escribe 1 o 2 y presiona Enter: "
-if "%OPCION%"=="1" set "MIC=robot"
-if "%OPCION%"=="2" set "MIC=pc"
-if "%MIC%"=="" (
-    echo Opcion no valida: escribe 1 o 2.
+if "%MIC%"=="" set "MIC=pc"
+if /i not "%MIC%"=="robot" if /i not "%MIC%"=="pc" (
+    echo Opcion no valida: "%MIC%". Usa: iniciar.bat   o   iniciar.bat robot
     pause
     exit /b 1
 )
 
-:revisar
-if /i not "%MIC%"=="robot" if /i not "%MIC%"=="pc" (
-    echo Opcion no valida: "%MIC%". Usa: iniciar.bat robot   o   iniciar.bat pc
-    exit /b 1
-)
+rem Las graficas van en su propia ventana, sin terminal (pythonw); se cierran con la X
+start "" "robot-env\Scripts\pythonw.exe" graficas.py
 
-"robot-env\Scripts\python.exe" server.py --mic %MIC% %2 %3
-pause
+rem El cerebro corre sin ventana y esta solo muestra lo que oye (vigilar.ps1): cerrarla o un Ctrl+C
+rem sin querer ya no apagan a Aries. Para apagarlo: apagar.bat
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0vigilar.ps1" -Mic %MIC%

@@ -127,28 +127,101 @@ def _fusionar(t: np.ndarray, a: np.ndarray, v_modelo: np.ndarray, motor: np.ndar
                 # Ya no se integra: lo que mide ahora es sobre todo la gravedad (lo inclinaron o lo sostienen)
                 vk = v[k - 1] * np.exp(-dt / TAU_DETENCION_S)
         v[k] = min(max(vk, -V_MAX), V_MAX)
+    # Al frenar o con un empujón se integra el acelerómetro, y al quedar quieto v pasa a 0 de golpe: lo que
+    # la integral no llegó a bajar es error del sensor y se reparte a lo largo del tramo (si no, la
+    # velocidad quedaba negativa un rato y la posición volvía para atrás)
+    for i, j in _tramos(~motor & ~quieto):
+        if i > 0 and j < len(t) and t[j] > t[i - 1]:
+            v[i:j] -= v[j - 1] * (t[i:j] - t[i - 1]) / (t[j] - t[i - 1])
     return v
+
+
+def _en_la_mano(t: np.ndarray, motor: np.ndarray, quieto: np.ndarray) -> np.ndarray:
+    """
+    Ratos sin motores que duran más de LIBRE_MAX_S sin quedar en calma: lo levantaron o lo llevan en la
+    mano (un empujón o el frenado duran menos). No son movimientos del robot: no se grafican.
+    """
+    mano = np.zeros(len(t), dtype=bool)
+    for i, j in _tramos(~motor & ~quieto):
+        if t[j - 1] - t[max(i - 1, 0)] > LIBRE_MAX_S:
+            mano[i:j] = True
+    return mano
+
+
+def _tramos(mascara: np.ndarray) -> list[tuple[int, int]]:
+    """Los tramos seguidos donde la máscara es True, como (inicio, fin) con fin excluido."""
+    bordes = np.flatnonzero(np.diff(np.concatenate([[0], mascara.astype(int), [0]])))
+    return list(zip(bordes[::2], bordes[1::2]))
+
+
+def _eje_adelante(m: dict[str, np.ndarray], t: np.ndarray, recto: np.ndarray,
+                  v_modelo: np.ndarray, motor: np.ndarray) -> tuple[str, float]:
+    """
+    El MPU6050 quedó montado girado 90° (23/10/2026: el avance lo marcaba "acel_lat", con el signo al revés)
+    y puede volver a cambiar si lo remontan. Se elige solo el eje y el signo cuya velocidad (∫a dt) acompaña
+    a la del modelo del motor en las rectas. Sin rectas, se supone el montaje de ENSAMBLAJE.md.
+    """
+    puntajes = {}
+    for columna in ("acel", "acel_lat"):
+        a = m[columna] - (np.median(m[columna][~motor]) if np.count_nonzero(~motor) >= 5 else 0.0)
+        puntaje = 0.0
+        for i, j in _tramos(recto):
+            j = min(j + 25, len(t))  # medio segundo más: también el frenado
+            puntaje += float(np.sum(_integrar(a[i:j], t[i:j]) * v_modelo[i:j]))
+        puntajes[columna] = puntaje
+    columna = max(puntajes, key=lambda c: abs(puntajes[c]))
+    if puntajes[columna] == 0:
+        return "acel", 1.0
+    return columna, float(np.sign(puntajes[columna]))
+
+
+def _hasta_calmarse(tarea: np.ndarray, motor: np.ndarray, quieto: np.ndarray) -> np.ndarray:
+    """Desde que arranca una tarea (recta o giro) hasta que el robot queda quieto o empieza otra."""
+    en_tarea = np.zeros(len(tarea), dtype=bool)
+    sigue = False
+    for k in range(len(tarea)):
+        if tarea[k]:
+            sigue = True
+        elif motor[k] or quieto[k]:  # empezó la otra tarea o ya se calmó
+            sigue = False
+        en_tarea[k] = sigue
+    return en_tarea
+
+
+def orientacion(angulo: np.ndarray) -> np.ndarray:
+    """Ángulo acumulado -> hacia dónde mira, de -180° a 180°: girar 360° (o 180° y 180°) vuelve a 0."""
+    return 180 - np.mod(180 - angulo, 360)
 
 
 def calcular(m: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
     """Recibe las columnas medidas y devuelve las magnitudes físicas, todas en función del tiempo."""
     t = (m["t_ms"] - m["t_ms"][0]) / 1000
-    giro = m["giro"]
     motor = (m["pwm_izq"] != 0) | (m["pwm_der"] != 0)
+    recto = motor & (np.sign(m["pwm_izq"]) == np.sign(m["pwm_der"]))  # las dos ruedas para el mismo lado
+
+    v_izq, v_der = velocidad_ruedas(m["pwm_izq"], m["pwm_der"], m["voltaje"], m["corriente"])
+    v_modelo = _suavizar((v_izq + v_der) / 2, t)
 
     # El firmware le resta al acelerómetro lo que marcaba quieto al encender, pero si después lo
     # apoyan un poco inclinado aparece un resto: se descuenta lo que marca sin motores (la mediana
     # ignora los ratos en que lo empujan o frena)
+    columna, signo = _eje_adelante(m, t, recto, v_modelo, motor)
     quieto_motor = np.count_nonzero(~motor) >= 5
-    sesgo = float(np.median(m["acel"][~motor])) if quieto_motor else 0.0
-    sesgo_lat = float(np.median(m["acel_lat"][~motor])) if quieto_motor else 0.0
-    a = m["acel"] - sesgo
+    sesgo = float(np.median(m[columna][~motor])) if quieto_motor else 0.0
+    a = signo * (m[columna] - sesgo)
     a_suave = _suavizar(a, t)
 
-    v_izq, v_der = velocidad_ruedas(m["pwm_izq"], m["pwm_der"], m["voltaje"], m["corriente"])
-    v_modelo = _suavizar((v_izq + v_der) / 2, t)
-    quieto = _en_calma(t, a_suave, giro, motor)
-    v = _fusionar(t, a, v_modelo, motor, quieto)
+    quieto = _en_calma(t, a_suave, m["giro"], motor)
+    mano = _en_la_mano(t, motor, quieto)
+    # Gira en el lugar (una rueda para cada lado): el centro del robot no avanza, aunque el acelerómetro
+    # se sacuda con el arranque y el frenado del giro
+    girando = _hasta_calmarse(motor & ~recto, motor, quieto)
+    v = np.where(mano | girando, 0.0, _fusionar(t, a, v_modelo, motor, quieto | mano | girando))
+    a_suave = np.where(mano | girando, 0.0, a_suave)
+    # Al avanzar o retroceder el robot cabecea con el arranque y el frenado y el giroscopio marca unos
+    # grados de ida y vuelta: en una recta no se cuenta como giro (ni como aceleración centrípeta)
+    giro = np.where(_hasta_calmarse(recto, motor, quieto) | mano, 0.0, m["giro"])
+    omega = np.radians(giro)
 
     x = _integrar(v, t)
     # Recorrido: todo lo que anduvo, sin importar el sentido (avanzar 2 m y volver 2 m = 4 m, aunque x = 0)
@@ -157,18 +230,19 @@ def calcular(m: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
 
     return {
         "t": t,
-        "moviendo": motor | ~quieto,
+        "moviendo": motor | (~quieto & ~mano),
         "x": x,
         "recorrido": recorrido,
         "v": v,
         "v_modelo": v_modelo,
         "a_mpu": a_suave,
         "a_mod": _derivar(_suavizar(v_modelo, t), t),
-        "a_lat": _suavizar(m["acel_lat"] - sesgo_lat, t),
+        # Centrípeta de las ruedas al girar: a = ω²·r, con r = medio ancho entre ruedas
+        "a_c": omega**2 * ANCHO_EJES / 2,
         "omega": giro,
         # El ángulo sale solo del giroscopio: el modelo del motor no sirve para esto porque supone la
         # misma corriente en las dos ruedas, y para ir derecho el robot les da PWM distinto
-        "angulo": _integrar(giro, t),
+        "angulo": orientacion(_integrar(giro, t)),
         "voltaje": m["voltaje"],
         "corriente": m["corriente"],
         "potencia": potencia,
@@ -191,7 +265,7 @@ def resumen(c: dict[str, np.ndarray]) -> dict[str, float]:
         "v_media": recorrido / tiempo if tiempo > 0 else 0.0,  # rapidez media mientras se movía
         "v_max": v_max,
         "a_max": float(np.max(np.abs(c["a_mpu"]))),
-        "angulo": float(c["angulo"][-1]),
+        "angulo": float(c["angulo"][-1]),  # hacia dónde quedó mirando (-180° a 180°)
         "corriente_max": float(np.max(c["corriente"])),
         "energia": energia,
         "potencia_media": energia / tiempo if tiempo > 0 else 0.0,

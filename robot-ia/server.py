@@ -10,8 +10,11 @@ Uso (lo más fácil es `bash iniciar.sh`, que pregunta qué micrófono usar):
     python server.py --mic robot   # micrófono del robot (INMP441 en el ESP32), es el normal
     python server.py --mic pc      # micrófono de la computadora, por si el del robot falla
     python server.py --guardar-audio   # guarda lo que manda el micrófono del robot en grabaciones/
+    python server.py --ver-nivel       # muestra cada 2 s el volumen que llega del micrófono del robot
 """
+import collections
 import json
+import logging
 import math
 import os
 import sys
@@ -19,7 +22,44 @@ import tempfile
 import threading
 import time
 import wave
+import warnings
 from pathlib import Path
+
+# La terminal muestra solo lo que Aries oye y hace: fuera los avisos de las librerías
+warnings.filterwarnings("ignore", category=FutureWarning)
+
+
+class _Copia:
+    """Escribe en la terminal y además en servidor.log: si el cerebro se cierra solo, ahí queda el porqué."""
+
+    def __init__(self, original, archivo):
+        self.original, self.archivo = original, archivo
+
+    def write(self, texto):
+        if self.original is not None:  # sin ventana (pythonw) no hay terminal: solo el archivo
+            self.original.write(texto)
+        self.archivo.write(texto)
+        self.archivo.flush()
+        return len(texto)
+
+    def flush(self):
+        if self.original is not None:
+            self.original.flush()
+
+    def isatty(self):
+        return False
+
+    def __getattr__(self, nombre):
+        return getattr(self.original if self.original is not None else self.archivo, nombre)
+
+
+_log = open(Path(__file__).parent / "servidor.log", "a", encoding="utf-8")
+_log.write(f"\n===== {time.strftime('%Y-%m-%d %H:%M:%S')} cerebro encendido =====\n")
+sys.stdout, sys.stderr = _Copia(sys.stdout, _log), _Copia(sys.stderr, _log)
+import faulthandler
+
+faulthandler.enable(_log)  # también los cierres bruscos (fallas de la tarjeta gráfica, etc.)
+os.environ.setdefault("FLASK_SKIP_DOTENV", "1")  # el .env lo lee nube.py
 
 import numpy as np
 from flask import Flask, jsonify, request
@@ -27,15 +67,19 @@ from flask_sock import Sock
 
 import oido
 import voz
-from brain import precargar as precargar_gemma, preguntar
+from brain import donde_esta_gemma, precargar as precargar_gemma, preguntar
 from escucha import BLOQUE, COLA_ECO_SEG, Aries, FuenteMicrofonoPC, Oyente
+from registro import Registro
 from simulate import ejecutar_accion_simulada
 
 app = Flask(__name__)
 sock = Sock(app)
+logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
 # Función para mandarle acciones al ESP32 conectado (None si no hay robot conectado)
 enviar_al_robot = None
+# Guarda en datos/ las mediciones de cada movimiento (las grafica graficas.py)
+registro = Registro()
 
 # El INMP441 entrega el audio bastante bajo; se ajusta cuando esté el micrófono real
 GANANCIA_MIC_ESP32 = 1.0
@@ -43,6 +87,8 @@ GANANCIA_MIC_ESP32 = 1.0
 MUDO = os.environ.get("ARIES_MUDO") == "1"
 # --guardar-audio: guarda cada frase que manda el robot en grabaciones/ (sirve para revisar el micrófono)
 GUARDAR_AUDIO = "--guardar-audio" in sys.argv
+# --ver-nivel: muestra cada 2 s el pico del micrófono del robot (para calibrar CORRIMIENTO en el firmware)
+VER_NIVEL = "--ver-nivel" in sys.argv
 
 
 def _opcion(nombre: str, por_defecto: str) -> str:
@@ -59,15 +105,17 @@ MICROFONO = _opcion("--mic", "robot")
 if MICROFONO not in ("robot", "pc"):
     sys.exit(f'Opción --mic no válida: "{MICROFONO}". Usa --mic robot o --mic pc.')
 CARPETA_GRABACIONES = Path(__file__).parent / "grabaciones"
+# Los últimos ~15 s que mandó el micrófono del robot (GET /muestra los guarda en un WAV para escucharlos)
+ultimo_audio: collections.deque = collections.deque(maxlen=15 * 16000 // 512)
 
-print("Cargando modelo Whisper (small)...")
+print("Cargando Whisper...")
 _t0 = time.time()
 oido.cargar()
-print(f"Whisper listo en {time.time() - _t0:.1f}s")
+print(f"Whisper listo en {time.time() - _t0:.1f}s ({oido.descripcion()})")
 voz.precargar()
 print("Voces de Piper listas")
 precargar_gemma()
-print("Gemma cargada en la GPU")
+print(f"Gemma cargada {donde_esta_gemma()}")
 
 
 @app.route("/comando", methods=["POST"])
@@ -167,6 +215,7 @@ def ws_robot(ws):
     Mensajes del ESP32:
       binario -> audio PCM 16 bits, 16 kHz, mono
       texto   -> {"texto": "..."} (comando escrito en el monitor serial)
+      texto   -> {"tipo": "medicion", ...} (sensores, ~50 por segundo; ver registro.py)
     Mensajes al ESP32:
       texto   -> {"accion", "parametro", "idioma", "respuesta_hablada"}
     """
@@ -177,8 +226,10 @@ def ws_robot(ws):
     lock_envio = threading.Lock()
     pendiente = np.zeros(0, dtype=np.float32)
     nivel_dc = 0.0
+    pico_nivel, desde_nivel = 0.0, time.monotonic()
 
     def enviar(accion: dict) -> None:
+        registro.nueva_accion(accion)
         with lock_envio:
             ws.send(json.dumps(accion))
 
@@ -203,9 +254,15 @@ def ws_robot(ws):
 
             if isinstance(mensaje, str):
                 try:
-                    texto = str(json.loads(mensaje).get("texto", "")).strip()
-                except (ValueError, AttributeError):
-                    texto = ""
+                    datos = json.loads(mensaje)
+                except ValueError:
+                    datos = None
+                if not isinstance(datos, dict):
+                    continue
+                if datos.get("tipo") == "medicion":
+                    registro.agregar(datos)
+                    continue
+                texto = str(datos.get("texto", "")).strip()
                 if texto and not ocupado.is_set():
                     ocupado.set()
                     threading.Thread(target=atender, kwargs={"texto": texto}, daemon=True).start()
@@ -219,6 +276,13 @@ def ws_robot(ws):
             # El INMP441 tiene un pequeño corrimiento de continua (DC); se resta un promedio lento
             nivel_dc = 0.99 * nivel_dc + 0.01 * float(muestras.mean()) if len(muestras) else nivel_dc
             muestras = np.clip((muestras - nivel_dc) * GANANCIA_MIC_ESP32, -1.0, 1.0)
+            ultimo_audio.append(muestras)
+            if VER_NIVEL and len(muestras):
+                pico_nivel = max(pico_nivel, float(np.max(np.abs(muestras))))
+                if time.monotonic() - desde_nivel >= 2:
+                    dbfs = 20 * math.log10(pico_nivel) if pico_nivel > 0 else -90.0
+                    print(f"🎚️  Micrófono del robot: pico {dbfs:.0f} dBFS (la voz debería llegar entre -25 y -6)", flush=True)
+                    pico_nivel, desde_nivel = 0.0, time.monotonic()
             pendiente = np.concatenate([pendiente, muestras])
 
             while len(pendiente) >= BLOQUE:
@@ -231,9 +295,25 @@ def ws_robot(ws):
                     threading.Thread(target=atender, kwargs={"frase": frase}, daemon=True).start()
                     break
     finally:
+        registro.cerrar()
         if enviar_al_robot is enviar:
             enviar_al_robot = None
         print("🔌 Robot desconectado", flush=True)
+
+
+@app.route("/muestra", methods=["GET"])
+def muestra():
+    """Guarda los últimos ~15 s del micrófono del robot en grabaciones/muestra.wav (para revisar el micrófono)."""
+    if not ultimo_audio:
+        return jsonify({"error": "Todavía no llegó audio del robot"}), 404
+    CARPETA_GRABACIONES.mkdir(exist_ok=True)
+    ruta = CARPETA_GRABACIONES / "muestra.wav"
+    with wave.open(str(ruta), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(16000)
+        w.writeframes((np.concatenate(list(ultimo_audio)) * 32767).astype(np.int16).tobytes())
+    return jsonify({"archivo": str(ruta)})
 
 
 @app.route("/salud", methods=["GET"])
@@ -244,28 +324,89 @@ def salud():
 def escuchar_microfono_pc() -> None:
     """Plan B (--mic pc): escucha por el micrófono de la computadora y le manda las acciones al ESP32."""
     oyente = Oyente()
+    interruptor = Oyente()  # mientras habla solo busca "para"
     aries = Aries(time.monotonic, mudo=MUDO)
     fuente = FuenteMicrofonoPC()
+    hablando: threading.Thread | None = None
+
+    def responder(accion: dict) -> None:
+        try:
+            aries.responder(accion, enviar_al_robot)
+            time.sleep(COLA_ECO_SEG)
+        except Exception as e:
+            print(f"⚠️  Error al responder: {e}", flush=True)
+
     print("🎧 Escuchando por el micrófono de la computadora. Di \"Hola Aries\".", flush=True)
     for bloque in fuente:
+        if hablando is not None:
+            if hablando.is_alive():
+                corta = interruptor.procesar(bloque)
+                if corta is not None and aries.pide_callar(corta):
+                    voz.callar()
+                    if enviar_al_robot is not None:
+                        enviar_al_robot({"accion": "detener", "parametro": 0.0, "idioma": "es",
+                                         "respuesta_hablada": ""})
+                continue
+            # Terminó de hablar: se tira lo que se oyó mientras tanto (su propia voz)
+            hablando = None
+            fuente.descartar_pendiente()
+            oyente.reiniciar()
+            interruptor.reiniciar()
+            continue
         frase = oyente.procesar(bloque)
         if frase is None:
             continue
         try:
             accion = aries.decidir(frase)
-            if accion is not None:
-                aries.responder(accion, enviar_al_robot)
-                time.sleep(COLA_ECO_SEG)
         except Exception as e:
             print(f"⚠️  Error con el micrófono de la PC: {e}", flush=True)
+            accion = None
         fuente.descartar_pendiente()
         oyente.reiniciar()
+        if accion is not None:
+            interruptor.reiniciar()
+            hablando = threading.Thread(target=responder, args=(accion,), daemon=True)
+            hablando.start()
+
+
+PUERTO_ANUNCIO = 5001  # el firmware escucha acá (ver buscarCerebro en robot_wifi.ino)
+
+
+def anunciar_cerebro() -> None:
+    """Cada segundo avisa en la red "ARIES-CEREBRO 5000": el robot encuentra la PC aunque cambie de dirección."""
+    import socket
+
+    mensaje = b"ARIES-CEREBRO 5000"
+    while True:
+        # A cada red de la PC (WiFi, cable...): 255.255.255.255 solo sale por una de ellas
+        try:
+            propias = [ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")]
+        except OSError:
+            propias = []
+        for ip in propias:
+            red = ip.rsplit(".", 1)[0]
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                    s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+                    s.bind((ip, 0))
+                    s.sendto(mensaje, (red + ".255", PUERTO_ANUNCIO))
+                    # El router de la casa no dejaba pasar el aviso "a todos" (al robot no le llegaba):
+                    # se manda además a cada dirección de la red, uno por uno (254 paquetitos cada 2 s)
+                    for n in range(1, 255):
+                        if f"{red}.{n}" != ip:
+                            s.sendto(mensaje, (f"{red}.{n}", PUERTO_ANUNCIO))
+            except OSError:
+                pass  # una red que se cayó o un adaptador virtual: se sigue con las demás
+        time.sleep(2)
 
 
 if __name__ == "__main__":
+    threading.Thread(target=anunciar_cerebro, daemon=True).start()
     if MICROFONO == "pc":
         print("🎤 Micrófono: el de la COMPUTADORA (el del robot se ignora)", flush=True)
         threading.Thread(target=escuchar_microfono_pc, daemon=True).start()
     else:
         print("🎤 Micrófono: el del ROBOT", flush=True)
+    import flask.cli
+    flask.cli.show_server_banner = lambda *args, **kwargs: None  # sin "Serving Flask app..."
     app.run(host="0.0.0.0", port=5000)

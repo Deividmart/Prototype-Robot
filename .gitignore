@@ -8,3 +8,10 @@ secrets.h
 
 # modelos de voz de Piper (pesados, se descargan)
 voces/
+
+# Claves de APIs (Groq): nunca a git
+.env
+
+# Registros de los movimientos (los graba el cerebro en cada prueba)
+robot-ia/datos/*.csv
+robot-ia/datos/*.png

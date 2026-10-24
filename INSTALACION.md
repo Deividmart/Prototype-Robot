@@ -6,10 +6,39 @@ micrófono. Se hace una sola vez. Para el uso de todos los días, mira [USO.md](
 Al final hay una tabla de [problemas comunes](#problemas-comunes) y lo que cambia
 [si usas Ubuntu](#si-usas-ubuntu).
 
+## La forma corta: Aries.bat (en cualquier computadora)
+
+Copia la carpeta `robot-ia` a la computadora (con su `.env`, si quieres llevar la clave de Groq) y haz
+doble clic en **`robot-ia\Aries.bat`**. Muestra si esa PC tiene WiFi, internet y el robot por USB, y
+un menú:
+
+| Opción | Qué hace |
+|---|---|
+| 6 Instalar o reparar | La primera vez en cada computadora (corre `instalar.bat`, tarda un buen rato). |
+| 7 Clave de Groq | Si falta la clave de internet (la guarda en `robot-ia\.env`). |
+| 8 Cargar el firmware | Solo si el robot tiene un firmware viejo o es un ESP32 nuevo. |
+| 2 Robot a la WiFi de esta PC | Con el robot por **USB** (nunca USB y el cable 55c → VIN a la vez): lee la red y la clave de la PC y se las enseña al robot. No hay que tocar `secrets.h` ni volver a cargar el firmware. |
+| 3 Robot a otra red | Igual, eligiendo la red de una lista o escribiéndola. |
+| 4 Redes del robot | El robot recuerda hasta 5 redes y se conecta solo a la que tenga mejor señal. |
+| 1 Encender Aries / 5 Apagar | Lo mismo que `iniciar.bat` y `apagar.bat`. |
+
+La red tiene que ser de **2,4 GHz** (en un iPhone: Compartir Internet → *Maximizar compatibilidad*), y
+la PC y el robot tienen que estar en la **misma** red. El robot encuentra solo la PC.
+
+El resto de esta guía es el camino largo, paso a paso.
+
 ## Qué necesitas
 
-- Una PC con **Windows 10 u 11** y **tarjeta gráfica NVIDIA** (con 8 GB va sobrado), con el
-  driver de NVIDIA instalado.
+- Una PC con **Windows 10 u 11** y tarjeta gráfica **NVIDIA o AMD**, con su driver instalado.
+  `instalar.bat` reconoce cuál es y arma todo para esa tarjeta:
+  - **NVIDIA** (con 8 GB va sobrado): Whisper y Gemma van en la tarjeta.
+  - **AMD**: Gemma va en la tarjeta (Ollama la usa sola en las Radeon RX 6000, 7000 y 9000, con el
+    driver *AMD Software: Adrenalin Edition* al día) y Whisper en el procesador con faster-whisper
+    (alrededor de 1 segundo por frase). PyTorch en Windows solo usa tarjetas NVIDIA.
+    En las AMD anteriores (por ejemplo la **RX 5500 XT**) el instalador enciende el modo **Vulkan** de
+    Ollama (`OLLAMA_VULKAN=1`, todavía experimental). Con 4 GB de memoria de video Gemma entra solo en
+    parte y el resto va en el procesador; con 8 GB entra completa.
+  - Sin ninguna de las dos, todo va en el procesador: funciona, pero responde más lento.
 - Unos **15 GB libres** en el disco e internet para la instalación (después solo hace falta para el clima).
 - El circuito: ESP32 en la protoboard, micrófono INMP441 y relé.
 - Un cable USB **de datos** (algunos cables solo cargan, y con esos la PC no ve el ESP32).
@@ -21,12 +50,10 @@ Al final hay una tabla de [problemas comunes](#problemas-comunes) y lo que cambi
 1. Entra a <https://github.com/Deividmart/Prototype-Robot> (si el repositorio es privado, David
    te tiene que agregar como colaborador).
 2. Botón verde **Code** → **Download ZIP**.
-3. Crea la carpeta `C:\Aries` y descomprime ahí el ZIP (clic derecho → **Extraer todo**).
+3. Descomprime el ZIP (clic derecho → **Extraer todo**), por ejemplo en `Documentos`.
 
-⚠️ **No lo pongas en el Escritorio, Documentos ni ninguna carpeta de OneDrive**: la instalación
-descarga unos 10 GB ahí adentro y OneDrive intentaría subirlos a la nube.
-
-Busca la carpeta **`robot-ia`** (queda dentro de `Prototype-Robot-main`): ahí pasa todo.
+Te queda una carpeta `Prototype-Robot-main`. Adentro está la carpeta **`robot-ia`**: ahí
+pasa todo.
 
 > **Cómo abrir una terminal en una carpeta:** abre la carpeta en el Explorador de archivos,
 > haz clic derecho en un espacio vacío y elige **Abrir en Terminal**. Todos los comandos de
@@ -34,26 +61,7 @@ Busca la carpeta **`robot-ia`** (queda dentro de `Prototype-Robot-main`): ahí p
 
 ## 2. Instalar todo
 
-Windows marca todo lo que sale de un ZIP descargado como "de internet", y **Control
-Inteligente de Aplicaciones** bloquea esos archivos `.bat`. Primero quita esa marca: abre una
-terminal en la carpeta `robot-ia` y escribe:
-
-```
-Get-ChildItem -Recurse | Unblock-File
-```
-
-No desactives Control Inteligente de Aplicaciones: después Windows no deja volver a activarlo.
-
-Ahora, en la carpeta `robot-ia`, haz **doble clic en `instalar.bat`**. Si Windows lo sigue
-bloqueando, corre el instalador directo desde la terminal:
-
-```
-powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1
-```
-
-Si aun así algo queda bloqueado, baja el proyecto con git en lugar del ZIP (lo que baja git no
-queda marcado): `winget install -e --id Git.Git`, abre una terminal nueva en `C:\Aries` y escribe
-`git clone https://github.com/Deividmart/Prototype-Robot.git`.
+En la carpeta `robot-ia`, haz **doble clic en `instalar.bat`**.
 
 Instala Python, Ollama con Gemma 3 4B, Whisper con soporte para la tarjeta gráfica, las voces,
 ffmpeg y las herramientas del ESP32. Tarda entre 20 y 40 minutos (descarga unos 10 GB).
@@ -64,27 +72,25 @@ ffmpeg y las herramientas del ESP32. Tarda entre 20 y 40 minutos (descarga unos 
 
 **Cuando termine, cierra todas las terminales** y abre una nueva para seguir.
 
-## 3. Conectar el micrófono
+## 3. Armar el robot y conectar el micrófono
 
 ⚠️ **Siempre con el USB desenchufado** mientras conectas cables.
 
-El ESP32 tapa todos los agujeros de su lado izquierdo en la protoboard, así que todo va del
-**lado derecho** (VIN, GND, D13, D27, D25, D33, D32). El pin 3V3 queda tapado: por eso el
-micrófono se alimenta desde el **D27**, que el firmware pone en 3,3 V.
+Cómo montar todo en el chasis y dónde va cada componente (ESP32 entre dos protoboards, motores,
+encoders, MPU6050, INA219, pilas): **[ENSAMBLAJE.md](ENSAMBLAJE.md)**.
 
-| Micrófono | Va a | Color de cable (punta en la protoboard) |
-|---|---|---|
-| VDD | D27 | negro |
-| GND | fila 30 (columnas F a J) | marrón |
-| L/R | fila 30 (columnas F a J) | blanco |
-| WS | D25 | gris |
-| SCK | D32 | morado |
-| SD | D33 | amarillo |
+El micrófono, para tenerlo a mano. Se alimenta desde el **D27**, que el firmware pone en 3,3 V:
 
-La **fila 30** es la fila de tierra: ahí llega el GND del ESP32 (cable naranja) y de ahí sale
-un cable a la patita `−` del relé (35 J).
+| Micrófono | Va a |
+|---|---|
+| VDD | D27 |
+| GND | riel de GND |
+| L/R | riel de GND |
+| WS | D25 |
+| SCK | D32 |
+| SD | D33 |
 
-El relé: `S` → D13, `+` → VIN, `−` → fila de tierra. Todavía no se usa, pero puede quedar conectado.
+El relé ya no se usa: quítalo (el TB6612 se encarga de los motores).
 
 > Regla de la protoboard: dos cosas solo se conectan si están en el mismo grupito de 5
 > agujeros (la misma fila y del mismo lado del canal del medio).
@@ -218,9 +224,9 @@ Para volver al micrófono del robot: Ctrl+C y `.\iniciar.bat robot`.
 |---|---|
 | `arduino-cli board list` no muestra ningún puerto | Prueba otro cable USB (el tuyo puede ser solo de carga) u otro puerto. Si sigue sin aparecer, instala el driver **CP210x Universal Windows Driver** de Silicon Labs (<https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers>) y vuelve a enchufar el ESP32. |
 | "Access denied" o "port is busy" al subir el firmware | Tienes el monitor abierto en otra terminal (u otro programa usando el puerto, como Arduino IDE). Ciérralo. |
-| "Control Inteligente de Aplicaciones ha bloqueado un archivo" | Falta quitar la marca de internet: `Get-ChildItem -Recurse \| Unblock-File` en la carpeta `robot-ia` (ver paso 2). |
 | `instalar.bat` dice que no encuentra winget | Instala **Instalador de aplicación** desde la Microsoft Store y vuelve a correrlo. |
 | `instalar.bat` dice que no encuentra el driver de NVIDIA | Instálalo desde <https://www.nvidia.com/drivers>, reinicia y vuelve a correrlo. |
+| Tengo AMD y Gemma va en el procesador | Instala el driver **AMD Software: Adrenalin Edition** desde <https://www.amd.com/support>, reinicia la PC y abre Ollama de nuevo. Con `ollama ps` (mientras corre Aries) la columna PROCESSOR tiene que decir `100% GPU`. En AMD anteriores a la RX 6000 revisa además que Ollama esté actualizado (versión 0.12.11 o más nueva, la que trae Vulkan) y que exista la variable `OLLAMA_VULKAN=1` (la crea `instalar.bat`; después de crearla hay que cerrar Ollama del todo y abrirlo de nuevo, o reiniciar la PC). |
 | Dice "no encuentro ..." después de instalarlo | Cierra la ventana y vuelve a hacer doble clic en `instalar.bat`. |
 | `"arduino-cli" no se reconoce como un comando` | Cierra la terminal y abre una nueva (los programas recién instalados aparecen en terminales nuevas). |
 | `AVISO: el micrófono no manda nada` | Revisa los 6 cables del micrófono con la tabla del paso 3, sobre todo VDD → D27. |
@@ -229,7 +235,8 @@ Para volver al micrófono del robot: Ctrl+C y `.\iniciar.bat robot`.
 | "No se pudo conectar" al WiFi | Revisa nombre y contraseña en `secrets.h`, y que la red sea de 2.4 GHz. |
 | "CUDA out of memory" | Hay otro programa usando la tarjeta gráfica (un juego u otra ventana de `iniciar.bat`). Ciérralo. |
 | Aries no se escucha | El parlante tiene que estar conectado y elegido como salida de sonido **antes** de encender el cerebro. |
-| Tarda varios segundos en responder | PyTorch no está usando la tarjeta gráfica. Vuelve a correr `instalar.bat` y fíjate en el paso 5: tiene que decir "Whisper va a usar la tarjeta grafica: NVIDIA ...". |
+| Tarda varios segundos en responder | Mira las líneas del arranque: `Whisper listo ... (small, en la tarjeta gráfica)` o `(base, en el procesador con faster-whisper)` está bien; `(small, en el procesador)` no: vuelve a correr `instalar.bat`. Si dice `Gemma cargada en el procesador`, Ollama no está usando la tarjeta: actualiza el driver (NVIDIA o AMD Adrenalin) y reinicia. En AMD viejas (antes de la RX 6000) Gemma siempre va en el procesador. |
+| Con tarjeta AMD, Whisper entiende mal | En el procesador usa el modelo `base`. Si la PC es potente, prueba el `small`: antes de `iniciar.bat`, escribe `set ARIES_WHISPER_MODELO=small` en la misma terminal (tarda unos 3 segundos por frase). |
 | El micrófono del robot no funciona y no hay tiempo de arreglarlo | Usa el [plan B](#plan-b-si-el-micrófono-del-robot-no-funciona): `.\iniciar.bat pc`. |
 | Escucha pero no entiende | Mira el volumen (paso 8). Para revisar el audio que llega, enciende el cerebro con `.\iniciar.bat robot --guardar-audio`: cada frase se guarda en la carpeta `grabaciones` y la puedes escuchar con doble clic. |
 

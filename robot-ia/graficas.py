@@ -60,14 +60,15 @@ EJE = "#c3c2b7"
 # El rango mínimo evita que el ruido de un sensor quieto se vea como un movimiento enorme.
 MAGNITUDES = {
     "posicion": ("Posición", "x", "m", 0.2, [("x", "", AZUL)], "final"),
-    "velocidad": ("Velocidad", "v", "m/s", 0.2,
-                  [("v", "acelerómetro + motor", AGUA), ("v_modelo", "solo modelo del motor", COLOR_MODELO)], "max"),
-    "aceleracion": ("Aceleración", "a", "m/s²", 1.0,
-                    [("a_mpu", "acelerómetro", COLOR_MPU), ("a_mod", "modelo del motor", COLOR_MODELO)], "max"),
+    # Una sola curva en cada una, coherentes entre sí: x = ∫v dt y v = ∫a dt (el acelerómetro corregido
+    # con los motores; solo con el acelerómetro, en 1 m daba 0,2 m)
+    "velocidad": ("Velocidad", "v", "m/s", 0.2, [("v", "", AGUA)], "max"),
+    "aceleracion": ("Aceleración", "a", "m/s²", 1.0, [("a_mpu", "", COLOR_MPU)], "max"),
     "vel_angular": ("Velocidad angular", "ω", "°/s", 40, [("omega", "", MAGENTA)], "max"),
-    "angulo": ("Ángulo girado", "θ", "°", 20,
+    # Hacia dónde mira, de -180° a 180°: después de una vuelta entera vuelve a 0
+    "angulo": ("Orientación", "θ", "°", 20,
                [("angulo", "", COLOR_MPU)], "final"),
-    "centripeta": ("Aceleración centrípeta", "aᶜ", "m/s²", 1.0, [("a_lat", "", VERDE)], "max"),
+    "centripeta": ("Aceleración centrípeta", "aᶜ", "m/s²", 0.2, [("a_c", "", VERDE)], "max"),
     "voltaje": ("Voltaje de las pilas", "V", "V", 1.0, [("voltaje", "", AMARILLO)], "min"),
     "corriente": ("Corriente de los motores", "I", "A", 0.2, [("corriente", "", ROJO)], "max"),
     "potencia": ("Potencia eléctrica", "P", "W", 1.0, [("potencia", "", GRANATE)], "max"),
@@ -83,6 +84,10 @@ OPCIONES = ["todas"] + list(MAGNITUDES)
 # Zona de las gráficas (a la derecha del menú, debajo del encabezado)
 ZONA = {"left": 0.205, "right": 0.985, "top": 0.83, "bottom": 0.075}
 PUNTOS_MAX = 4000  # en registros largos se dibuja 1 de cada n puntos: la ventana sigue rápida
+# Cada movimiento dura 1 o 2 s y entre uno y otro pasan minutos: con el tiempo real las curvas quedaban
+# como rayitas. Los ratos quieto se acortan a PAUSA_S (una franja gris dice cuánto duraron de verdad)
+PAUSA_S = 1.0
+MARGEN_S = 0.6  # lo que se deja antes y después de cada movimiento
 
 plt.rcParams.update({
     "figure.facecolor": FONDO,
@@ -142,11 +147,43 @@ def _reducir(t: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return t[::paso], y[::paso]
 
 
-def _dibujar_panel(ax, c: dict, eventos: list, clave: str, grande: bool, con_eje_x: bool, con_eventos: bool) -> None:
+def acortar_pausas(t: np.ndarray, moviendo: np.ndarray) -> tuple[np.ndarray, list[tuple[float, float, float]]]:
+    """
+    Tiempo para el eje x con los ratos quieto acortados a PAUSA_S.
+    Devuelve el tiempo nuevo y las pausas como (desde, hasta, segundos reales) en el tiempo nuevo.
+    """
+    if len(t) < 3:
+        return t, []
+    n = max(1, int(round(MARGEN_S / float(np.median(np.diff(t))))))
+    activo = np.convolve(moviendo.astype(float), np.ones(2 * n + 1), mode="same") > 0
+    dt = np.diff(t, prepend=t[0])
+    pausas = []
+    bordes = np.flatnonzero(np.diff(np.concatenate([[0], (~activo).astype(int), [0]])))
+    for i, j in zip(bordes[::2], bordes[1::2]):
+        dura = float(t[j - 1] - t[max(i - 1, 0)])
+        if dura > PAUSA_S:
+            dt[i:j] *= PAUSA_S / dura
+            pausas.append((i, j, dura))
+    nuevo = t[0] + np.cumsum(dt)
+    return nuevo, [(float(nuevo[max(i - 1, 0)]), float(nuevo[j - 1]), dura) for i, j, dura in pausas]
+
+
+def _dibujar_panel(ax, c: dict, eventos: list, clave: str, grande: bool, con_eje_x: bool, con_eventos: bool,
+                   pausas: list) -> None:
     titulo, simbolo, unidad, rango_min, series, marca = MAGNITUDES[clave]
     t = c["t"]
+    for desde, hasta, dura in pausas:
+        ax.axvspan(desde, hasta, color=GRILLA, alpha=0.6, linewidth=0, zorder=0)
+        if grande:
+            ax.annotate(f"quieto\n{dura:.0f} s", ((desde + hasta) / 2, 0.02), xycoords=("data", "axes fraction"),
+                        ha="center", va="bottom", fontsize=9, color=APAGADO)
     for columna, etiqueta, color in series:
-        tr, yr = _reducir(t, c[columna])
+        y = c[columna]
+        if clave == "angulo":
+            # Al pasar de 180° a -180° (es la misma dirección) la línea se corta en vez de cruzar el gráfico
+            y = y.copy()
+            y[1:][np.abs(np.diff(y)) > 180] = np.nan
+        tr, yr = _reducir(t, y)
         ax.plot(tr, yr, color=color, linewidth=2.4 if grande else 1.8, label=etiqueta or None,
                 solid_capstyle="round", solid_joinstyle="round", zorder=3)
         if len(series) == 1 and clave != "voltaje":
@@ -155,7 +192,8 @@ def _dibujar_panel(ax, c: dict, eventos: list, clave: str, grande: bool, con_eje
     ax.set_title(titulo, fontsize=15 if grande else 10.5)
     ax.set_ylabel(f"{simbolo} ({unidad})", fontsize=12 if grande else 9)
     if con_eje_x:
-        ax.set_xlabel("tiempo (s)", fontsize=12 if grande else 9)
+        ax.set_xlabel("tiempo (s) · franjas grises: ratos quieto, acortados" if pausas else "tiempo (s)",
+                      fontsize=12 if grande else 9)
     ax.tick_params(labelsize=11 if grande else 8.5)
 
     abajo, arriba = ax.get_ylim()
@@ -304,7 +342,11 @@ class Visor:
         c = fisica.calcular(self.medido)
         r = fisica.resumen(c)
         t0 = self.medido["t_ms"][0]
-        eventos = [((t - t0) / 1000, texto_evento(e)) for t, e in self.medido.get("eventos", [])]
+        t_real = c["t"]
+        c = dict(c)
+        c["t"], pausas = acortar_pausas(t_real, c["moviendo"])
+        eventos = [(float(np.interp((t - t0) / 1000, t_real, c["t"])), texto_evento(e))
+                   for t, e in self.medido.get("eventos", [])]
 
         hora, fecha = cuando(self.nombre)
         self.txt_titulo.set_text(f"Registro de las {hora}")
@@ -314,7 +356,7 @@ class Visor:
         self.txt_comandos.set_text(f"{fecha}   ·   Comandos: {comandos}")
         self.txt_resumen.set_text(
             f"Desplazamiento {r['distancia']:.2f} m    Recorrido {r['recorrido']:.2f} m    "
-            f"Ángulo {round(r['angulo'])}°    En movimiento {r['tiempo']:.1f} s    "
+            f"Orientación {round(r['angulo'])}°    En movimiento {r['tiempo']:.1f} s    "
             f"Rapidez media {r['v_media']:.2f} m/s    Vel. máx {r['v_max']:.2f} m/s    "
             f"Acel. máx {r['a_max']:.2f} m/s²    Energía {r['energia']:.1f} J"
         )
@@ -332,12 +374,14 @@ class Visor:
             gs = GridSpec(3, 3, figure=self.fig, hspace=0.55, wspace=0.3, **ZONA)
             for i, clave in enumerate(GRILLA_TODAS):
                 ax = self.fig.add_subplot(gs[i // 3, i % 3])
-                _dibujar_panel(ax, c, eventos, clave, grande=False, con_eje_x=i // 3 == 2, con_eventos=i == 0)
+                _dibujar_panel(ax, c, eventos, clave, grande=False, con_eje_x=i // 3 == 2, con_eventos=i == 0,
+                               pausas=pausas)
                 self.ejes.append(ax)
         else:
             gs = GridSpec(1, 1, figure=self.fig, **ZONA)
             ax = self.fig.add_subplot(gs[0])
-            _dibujar_panel(ax, c, eventos, self.seleccion, grande=True, con_eje_x=True, con_eventos=True)
+            _dibujar_panel(ax, c, eventos, self.seleccion, grande=True, con_eje_x=True, con_eventos=True,
+                           pausas=pausas)
             self.ejes.append(ax)
 
 

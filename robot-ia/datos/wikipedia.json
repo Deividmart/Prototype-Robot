@@ -1,0 +1,197 @@
+{
+ "es:condensador eléctrico": {
+  "cuando": 1792447563.8135316,
+  "frase": "Según Wikipedia: Un condensador eléctrico es un dispositivo electrónico pasivo, formado por un par de superficies conductoras en situación de influencia total separados entre sí por un medio dieléctrico o por vacío, capaz de almacenar carga y por tanto energía eléctrica."
+ },
+ "en:electric battery": {
+  "cuando": 1792447568.9178762,
+  "frase": "According to Wikipedia: An electric battery is a source of electric power consisting of one or more electrochemical cells with external connections for powering electrical devices. When a battery is supplying power, its positive terminal is the cathode and its negative terminal is the anode."
+ },
+ "es:pila eléctrica": {
+  "cuando": 1792447573.8258193,
+  "frase": "Según Wikipedia: Con el nombre pila eléctrica se hace referencia a un dispositivo capaz de convertir energía química en energía eléctrica mediante un proceso químico transitorio de intercambio de electrones, conocido como reacción de oxidación-reducción, que se produce al conectar los electrodos del dispositivo."
+ },
+ "es:ley de ohm": {
+  "cuando": 1792447578.712859,
+  "frase": "Según Wikipedia: La ley de Ohm, postulada por el físico y matemático alemán Georg Simon Ohm, es una ley básica para entender los fundamentos principales de los circuitos eléctricos. Establece que la diferencia de potencial que aplicamos entre los extremos de un conductor determinado es directamente proporcional a la intensidad de la corriente que circula por el citado conductor."
+ },
+ "es:diodo": {
+  "cuando": 1792447583.7031844,
+  "frase": "Según Wikipedia: Un diodo es un componente electrónico de dos terminales que permite la circulación de la corriente eléctrica a través de él en un solo sentido, bloqueando el paso si la corriente circula en sentido contrario, no solo sirve para la circulación de corriente eléctrica sino que este la controla y resiste."
+ },
+ "es:magnetismo": {
+  "cuando": 1792447588.5949826,
+  "frase": "Según Wikipedia: El magnetismo es el conjunto de fenómenos físicos mediados por campos magnéticos. Estos pueden ser generados por las corrientes eléctricas o por los momentos magnéticos intrínsecos de las partículas constituyentes de los materiales."
+ },
+ "es:circuito eléctrico": {
+  "cuando": 1792447593.4906545,
+  "frase": "Según Wikipedia: Un circuito eléctrico es una interconexión de componentes eléctricos que transportan la corriente eléctrica a través de una trayectoria cerrada."
+ },
+ "es:alessandro volta": {
+  "cuando": 1792447598.5030293,
+  "frase": "Según Wikipedia: Alessandro Giuseppe Antonio Anastasio Volta fue un químico y físico italiano, famoso principalmente por el descubrimiento del metano en 1776 y la invención y desarrollo de la pila eléctrica en 1799. La unidad de fuerza electromotriz del Sistema Internacional de Unidades ha llevado el nombre de voltio en su honor desde 1881."
+ },
+ "ctx:es:juan pérez gómez": {
+  "cuando": 1792449388.946694,
+  "datos": {
+   "titulo": "Juan Pedro Pérez-Gómez",
+   "texto": "Juan Pedro Pérez-Gómez Delaunay (España, siglo XX) es un diplomático español. Es embajador de España en Camerún (desde 2025)​",
+   "varios": false,
+   "parecido": true
+  }
+ },
+ "ctx:es:shakira": {
+  "cuando": 1792449393.315532,
+  "datos": {
+   "titulo": "Shakira",
+   "texto": "Shakira Isabel Mebarak Ripoll (Barranquilla, 2 de febrero de 1977), conocida simplemente como Shakira, es una cantante, compositora, productora, bailarina, multinstrumentista, empresaria y actriz colombiana. Apodada como la «Reina del pop latino», es considerada un icono de la música latina por su alto nivel de ventas, versatilidad vocal, éxito e influencia global.​​​​​​Desde su debut en los años 90 hasta la actualidad ha tenido una gran repercusión en la escena musical,​​ siendo citada en numerosas ocasiones por inspirar e influir a toda una generación de cantantes.​​ Con una carrera artística de más de treinta años,​es ampliamente reconocida como la «artista latina más exitosa e influyente de todos los tiempos».​​​​Del mismo modo, es la artista latina con mayores ventas discográficas en la historia, con más de 125 millones de álbumes y sencillos vendidos.​​​​\nInició su carrera musical en 1991, tras firmar un contrato con Sony Music Colombia por tres álbumes. Luego de dos intentos fallidos en 1991 y 1993, Shakira debutó en colaboración con Luis Fernando Ochoa en el mercado discográfico hispanoamericano en 1995 con el álbum Pies descalzos, vendiendo más de 4 millones de copias.​​​​ Años después, en 1998, continuó trabajando con Ochoa en su álbum ¿Dónde están los ladrones?, que la convirtió en la artista más popular de Latinoamérica, vendiendo más de 6 millones de copias.​​​ En 1999, la transmisión de su primer álbum en vivo MTV Unplugged se convirtió en la primera presentació",
+   "varios": false
+  }
+ },
+ "ctx:es:ley de ohm": {
+  "cuando": 1792449397.3683503,
+  "datos": {
+   "titulo": "Ley de Ohm",
+   "texto": "La ley de Ohm,  postulada por el físico y matemático alemán Georg Simon Ohm, es una ley básica para entender los fundamentos principales de los circuitos eléctricos. Establece que la diferencia de potencial \n  \n    \n      \n        V\n      \n    \n    {\\displaystyle V}\n  \n que aplicamos entre los extremos de un conductor determinado es directamente proporcional a la intensidad de la corriente \n  \n    \n      \n        I\n      \n    \n    {\\displaystyle I}\n  \n que circula por el citado conductor. Ohm completó la ley introduciendo la noción de resistencia eléctrica \n  \n    \n      \n        R\n      \n    \n    {\\displaystyle R}\n  \n; que es el factor de proporcionalidad que aparece en la relación entre \n  \n    \n      \n        V\n      \n    \n    {\\displaystyle V}\n  \n e \n  \n    \n      \n        I\n      \n    \n    {\\displaystyle I}\n  \n:\n\n  \n    \n      \n        V\n        =\n        R\n        ⋅\n        I\n        \n      \n    \n    {\\displaystyle V=R\\cdot I\\,}\n  \n\nLa fórmula anterior se conoce como fórmula general de la ley de Ohm,​​ y en la misma, \n  \n    \n      \n        V\n      \n    \n    {\\displaystyle V}\n  \n corresponde a la diferencia de potencial, \n  \n    \n      \n        R\n      \n    \n    {\\displaystyle R}\n  \n a la resistencia e \n  \n    \n      \n        I\n      \n    \n    {\\displaystyle I}\n  \n a la intensidad de la corriente. Las unidades de esas tres magnitudes en el sistema internacional de unidades son, respectivamente, voltios (V), ohmios (Ω) y amperios (A).\nEn física, el término ley de Ohm se ",
+   "varios": false
+  }
+ },
+ "ctx:es:pedro martínez lópez": {
+  "cuando": 1792449403.3366373,
+  "datos": {
+   "titulo": "Martínez López",
+   "texto": "Martínez López puede hacer referencia a:\n\nCándida Martínez López, historiadora y política española.\nEnrique Martínez López, hispanista y cervantista español que trabajó en Brasil y Estados Unidos.\nFernando Martínez López, político español.\nFlorencio Martínez López, político español.\nGema Martínez López, política mexicana.\nLester Martínez López, general estadounidense.\nMargarita Martínez López, política mexicana.\nRamón Martínez-López, filólogo, intelectual y político nacionalista gallego.\nPedro Martínez López, filólogo español.",
+   "varios": true,
+   "parecido": true
+  }
+ },
+ "ctx:es:álvaro díaz": {
+  "cuando": 1792449486.5307949,
+  "datos": {
+   "titulo": "Álvaro Díaz",
+   "texto": "Álvaro Díaz puede referirse a:\n\nÁlvaro Díaz González (1972-), un periodista, productor, director de cine y televisión chileno;\nÁlvaro Díaz Huici (1958-), un editor y escritor asturiano\nÁlvaro Díaz Pérez (1950-2021), un economista y político chileno; o\nÁlvaro Díaz Rodríguez  (1989-), cantante puertorriqueño",
+   "varios": true
+  }
+ },
+ "ctx:es:su mía califa": {
+  "cuando": 1792449847.3991241,
+  "datos": {
+   "titulo": "Al-Mutádid (califa)",
+   "texto": "Al-Mutádid (857-902) (árabe: المعتضد بالله, al-mu‘taḍid bi-llāh) fue el califa abasí de Bagdad desde 892 hasta su muerte.\nIncluso antes de ser nombrado califa, desempeñó el poder supremo durante el reinado de su predecesor al-Mutámid. Bajo su eficaz administración, el Egipto tulúnida volvió al dominio califal. Combatió a los jariyíes en Mesopotamia.\nTras un próspero reinado de diez años, falleció y le sucedió su hijo al-Muktafi, habido de una esclava turca.",
+   "varios": false,
+   "parecido": true
+  }
+ },
+ "ctx:es:jesús manuel nieve cortés": {
+  "cuando": 1792449865.716307,
+  "datos": {
+   "titulo": "Jesús Ferrero",
+   "texto": "Jesús Ferrero (Zamora, 30 de diciembre de 1952) es un escritor español.",
+   "varios": false,
+   "parecido": true
+  }
+ },
+ "ctx:es:gabriel armando mora quintero": {
+  "cuando": 1792449945.7044725,
+  "datos": {
+   "titulo": "Mora (cantante)",
+   "texto": "Gabriel Armando Mora Quintero (Bayamón, Puerto Rico, 18 de abril de 1996), más conocido por su nombre artístico, Mora, es un cantante, compositor y productor discográfico puertorriqueño.​",
+   "varios": false,
+   "parecido": true
+  }
+ },
+ "ctx:es:las batallas de aura": {
+  "cuando": 1792450072.4830377,
+  "datos": {
+   "titulo": "Farmear aura",
+   "texto": "«Farmear aura» o traducido literalmente como «cultivar aura» es una expresión coloquial surgida de una tendencia viral de internet popular entre la Generación Z, que hace referencia a las acciones llevadas a cabo por jóvenes para ganar reputación o «ganar puntos»​ a través de muestras de carisma, seguridad y presencia, pero de una manera despreocupada.​​​",
+   "varios": false,
+   "parecido": true
+  }
+ },
+ "ctx:es:el mejor equipo al mundo": {
+  "cuando": 1792553167.529888,
+  "datos": {
+   "titulo": "Premio World Soccer al mejor equipo del mundo",
+   "texto": "El Premio World Soccer al mejor equipo del mundo es un galardón que concede anualmente, desde 1982, la revista deportiva inglesa World Soccer, al mejor equipo de fútbol del año. El premio se concede en función de las votaciones de los lectores de la revista, que valoran los méritos de todos los equipos del mundo a lo largo del año, tanto si son equipos de clubes como de selecciones nacionales.\nLa revista también concede anualmente los premios al mejor jugador, el mejor entrenador, mejor árbitro y al mejor jugador joven.",
+   "varios": false,
+   "parecido": true
+  }
+ },
+ "ctx:es:albert einstein": {
+  "cuando": 1792553185.3200324,
+  "datos": {
+   "titulo": "Albert Einstein",
+   "texto": "Albert Einstein (pronunciación en alemán: /ˈalbɛʁt ˈaɪnʃtaɪn/ ();​ Ulm, Reino de Wurtemberg, 14 de marzo de 1879-Princeton, Nueva Jersey, 18 de abril de 1955) fue un físico alemán de origen judío, nacionalizado después suizo, austriaco y estadounidense, conocido principalmente por desarrollar la teoría de la relatividad. Se le considera el científico más importante, conocido y popular del siglo XX.​​\nEn 1905, cuando era un joven físico desconocido, empleado en la Oficina de Patentes de Berna, publicó su teoría de la relatividad especial. En ella incorporó, en un marco teórico simple fundamentado en postulados físicos sencillos, conceptos y fenómenos estudiados antes por Henri Poincaré y Hendrik Lorentz. Como una consecuencia lógica de esta teoría, dedujo la ecuación de la física más conocida a nivel popular: la equivalencia masa-energía, E=mc². Ese año, publicó otros trabajos que sentarían algunas de las bases de la física estadística y de la mecánica cuántica.\nEn 1915, presentó la teoría de la relatividad general, en la que reformuló por completo el concepto de la gravedad.​ Una de las consecuencias fue el surgimiento del estudio científico del origen y la evolución del universo por la rama de la física denominada cosmología. En 1919, cuando las observaciones británicas de un eclipse solar acontecido en mayo de ese año, confirmaron sus predicciones acerca de la curvatura de la luz, fue idolatrado por la prensa.​ Einstein se convirtió en un ícono popular de la ciencia mundial",
+   "varios": false
+  }
+ },
+ "ctx:es:rueda": {
+  "cuando": 1792567308.5182562,
+  "datos": {
+   "titulo": "Rueda",
+   "texto": "La rueda es un elemento circular y mecánico que gira alrededor de un eje.​ Puede ser considerada una máquina simple, y forma parte del conjunto denominado elementos de máquinas.\nEs uno de los inventos fundamentales en la Historia de la humanidad, por su gran utilidad en la elaboración de alfarería. También en el transporte terrestre,  como componente fundamental de máquinas.​ Sus múltiples usos han sido esenciales en el desarrollo del progreso humano: como por ejemplo las primeras carretas impulsadas por caballos después siguiendo las máquinas de vapor.\nEn su forma primitiva, una rueda es un bloque circular de un material duro y duradero en  cuyo centro se ha perforado un orificio a través del cual se coloca un cojinete del eje sobre el cual gira la rueda cuando se aplica un par motor a la rueda alrededor de su eje. El conjunto de rueda y eje puede considerarse una de las seis máquinas simples. Cuando se coloca verticalmente debajo de una plataforma o caja de carga, la rueda que gira sobre el eje horizontal permite transportar cargas pesadas. Esta disposición es el tema principal de este artículo, pero hay muchas otras aplicaciones de una rueda que se tratan en los artículos correspondientes: cuando se coloca horizontalmente, la rueda que gira sobre su eje vertical proporciona el movimiento giratorio que se utiliza para dar forma a los materiales (por ejemplo, una rueda de alfarero ); cuando está montado en una columna conectada a un timón o al mecanismo de dirección de un ve",
+   "varios": false
+  }
+ },
+ "ctx:en:gravity": {
+  "cuando": 1792570177.8977556,
+  "datos": {
+   "titulo": "Gravity",
+   "texto": "In physics, gravity (from Latin  gravitas 'weight'), also known as gravitation or a gravitational interaction, is a fundamental interaction, which may be described as the force that draws material objects towards each other.\nThe gravitational attraction between clouds of primordial hydrogen and clumps of dark matter in the early universe caused the hydrogen gas to coalesce, eventually condensing and fusing to form stars. At larger scales this resulted in galaxies and clusters, so gravity is a primary driver for the large-scale structures in the universe. Gravity has an infinite range, although its effects become weaker as objects get farther away.\nGravity is described by the general theory of relativity, proposed by Albert Einstein in 1915, which describes gravity in terms of the curvature of spacetime, caused by the uneven distribution of mass. The most extreme example of this curvature of spacetime is a black hole, from which nothing—not even light—can escape once past the black hole's event horizon. However, for most applications, gravity is sufficiently well approximated by Newton's law of universal gravitation, which describes gravity as an attractive force between any two bodies that is proportional to the product of their masses and inversely proportional to the square of the distance between them.\nScientists are looking for a theory that describes gravity in the framework of quantum mechanics (quantum gravity), which would unify gravity and the other known fundamental",
+   "varios": false
+  }
+ },
+ "es:ley de gauss": {
+  "cuando": 1792731669.8068445,
+  "frase": "Según Wikipedia: En física, la ley de Gauss, relacionada con el teorema de la divergencia o teorema de Gauss, establece que el flujo de ciertos campos a través de una superficie cerrada es proporcional a la magnitud de las fuentes de dicho campo que hay en el interior de la misma superficie. Estos campos son aquellos cuya intensidad decrece como la distancia a la fuente al cuadrado."
+ },
+ "ctx:es:dragon ball": {
+  "cuando": 1792785871.128043,
+  "datos": {
+   "titulo": "Dragon Ball",
+   "texto": "Dragon Ball (ドラゴンボール, tdl. «Bola de dragón»?) es un manga escrito e ilustrado por Akira Toriyama. Fue publicado originalmente en la revista Shōnen Jump, de la editorial japonesa Shūeisha, entre 1984 y 1995.​​ Su trama describe las aventuras de Gokū, un guerrero saiyajin, experto en artes marciales que en su infancia inicia sus viajes y aventuras en las que pone a prueba y mejora sus habilidades de pelea, enfrentando oponentes y protegiendo a la Tierra de otros seres que quieren conquistarla y exterminar a la humanidad. Conforme transcurre la trama, conoce a otros personajes que le ayudan en este propósito. El nombre de la serie proviene de unas esferas mágicas que al ser reunidas invocan a un dragón que concede deseos. En varias ocasiones resultan útiles tanto para Gokū y sus amigos como para la humanidad, aunque también son procuradas de forma constante por algunos seres malignos.\nEl manga tuvo 519 capítulos impresos recopilados en 42 volúmenes tankōbon.​​ Dos años después de su lanzamiento, Toei Animation estrenó una adaptación anime que abarcó aproximadamente la primera mitad de la obra. Una vez concluida su transmisión en 1989 por el canal Fuji Television en Japón, Toei estrenó una continuación titulada Dragon Ball Z, la cual incorporó el contenido restante del manga.​ Un tercer anime producido por el mismo estudio se estrenó en 1996. Denominado Dragon Ball GT, posee un argumento inédito en cuya redacción no participó Toriyama.​ En 2015 comenzó a emitirse Dragon Ball Supe",
+   "varios": false
+  }
+ },
+ "ctx:es:tiempo": {
+  "cuando": 1792798916.4116457,
+  "datos": {
+   "titulo": "Tiempo",
+   "texto": "El tiempo (del latín tempus; símbolo: t) es una magnitud física con la que se mide la duración o separación de acontecimientos. \nPara cada observador, el tiempo medido por dicho observador le permite ordenar los sucesos en tres conjuntos: un pasado, un futuro y un tercer conjunto de eventos ni pasados ni futuros respecto a otro.\nEn mecánica clásica a esta tercera clase se llama «presente», y está formada por eventos simultáneos a uno en particular. Además en mecánica clásica, la división en pasado, presente y futuro es la misma para todos los observadores, hecho asociado a que en mecánica clásica el tiempo y el espacio son absolutos.\nEn mecánica relativista el concepto de tiempo es más complejo: los hechos simultáneos («presente») son relativos al observador, salvo que se produzcan en el mismo lugar del espacio; por ejemplo, un choque entre dos partículas. Como consecuencia de lo anterior el tiempo y el espacio en mecánica relativista son relativos.\nLa unidad básica para medir el tiempo en el Sistema Internacional es el segundo, cuyo símbolo es s (debido a que es un símbolo y no una abreviatura, no se debe escribir con mayúscula, ni se escribe como seg, sg o sec, ni agregando un punto posterior).\nEl tiempo ha sido durante mucho tiempo un importante tema de estudio en la religión, la filosofía y la ciencia, pero definirlo de manera aplicable a todos los campos sin circularidad ha eludido sistemáticamente a los estudiosos.​\nNo obstante, campos tan diversos como los negocios, la",
+   "varios": false
+  }
+ },
+ "ctx:es:mario bros": {
+  "cuando": 1792799516.1288297,
+  "datos": {
+   "titulo": "Mario Bros.",
+   "texto": "Mario Bros. (マリオブラザーズ, Mario Burazāzu?, lit. Hermanos Mario) es un videojuego de arcade desarrollado y publicado por Nintendo en 1983. Fue creado por Shigeru Miyamoto y Gunpei Yokoi, el ingeniero jefe de Nintendo.\nEn el juego, Mario es retratado como un fontanero ítalo-estadounidense que, junto con su hermano menor Luigi, tiene que derrotar a las criaturas que han venido de las alcantarillas de Nueva York. El juego se centra en la exterminación de estas, volteándolas sobre sus espaldas y pateándolas. \nFue la tercera aparición de Mario además de la primera aparición con su nombre definitivo, ya que en Donkey Kong (1981) aparecía bajo el seudónimo de Jumpman. También es considerado como el primer juego en hacer debutar al personaje de Luigi, aunque en realidad este apareció meses antes en el juego homónimo de Game & Watch del mismo año.​ Los elementos introducidos en Mario Bros., como las tuberías, monedas de bonificación giratorias, tortugas que se pueden voltear sobre sus espaldas y Luigi, se trasladaron a Super Mario Bros. (1985) y se convirtieron en elementos básicos de la franquicia.\nEl éxito de Mario Bros. llevó posteriormente al relanzamiento del juego en las videoconsolas y computadoras: Atari 2600, Atari 5200, Familia Atari de 8 bits, Atari 7800,​ Amstrad CPC, Sinclair ZX Spectrum y Commodore 64. Las versiones originales de Mario Bros. —la versión de arcade y la versión de Family Computer/Nintendo Entertainment System (FC/NES)— fueron recibidas positivamente por los cr",
+   "varios": false
+  }
+ },
+ "ctx:es:goku": {
+  "cuando": 1792799668.0885131,
+  "datos": {
+   "titulo": "Son Gokū",
+   "texto": "Son Gokū (孫（そん） 悟空（ごくう）, Son Gokū?) es el protagonista principal de la serie multimedia del manga y anime Dragon Ball. Fue creado por el mangaka Akira Toriyama en el año 1984. Para el comienzo de la historia, Goku se nos muestra como un niño de once años que practica las artes marciales y exhibe una cola de mono y fuerza sobrehumana,​ pero más adelante se revelará que esas particularidades obedecen a su naturaleza extraterrestre perteneciente a la raza ficticia saiyajin, y que su nombre original era Kakarotto (カカロット, Kakarotto?).​​ El nombre Son Gokū, proviene de Sun Wukong, un personaje de la historia china Viaje al Oeste,​ mientras que el nombre de saiyajin, Kakarotto, proviene de una deformación del inglés carrot (キャロット, kyarotto?, 'zanahoria').​En Latinoamérica, originalmente —y por poco tiempo— la serie animada se conoció con el nombre Zero y el dragón mágico, basado en el doblaje en la versión en inglés hecha por Harmony Gold, por ello el primer nombre con que se conoció a Gokū fue Zero.​​",
+   "varios": false
+  }
+ },
+ "ctx:es:gravedad": {
+  "cuando": 1792813344.801595,
+  "datos": {
+   "titulo": "Gravedad",
+   "texto": "La gravedad es un fenómeno natural por el cual los objetos y campos de materia dotados de masa o energía son atraídos entre sí, efecto mayormente observable en la interacción entre los planetas, galaxias y demás objetos del universo. Es una distorsión del espacio-tiempo y es una de las cuatro interacciones fundamentales que origina la fuerza que experimenta un cuerpo físico en las cercanías de un objeto astronómico y la primera de estas en ser estudiada. También se denomina interacción gravitatoria o gravitación. Históricamente se la ha llamado también fuerza de gravedad.\nEn el estudio de la gravedad han realizado aportes significativos: Aristóteles planteando esta fuerza en su obra Física, Newton con su ley de gravitación universal y Einstein con su relatividad general.​ En la actualidad, no ha podido ser descrita aún por la mecánica cuántica ni por la teoría cuántica de campos.​\nSi un cuerpo está situado en las proximidades de un planeta, un observador a una distancia fija del planeta medirá una aceleración del cuerpo dirigida hacia la zona central de dicho planeta, si tal cuerpo no está sometido al efecto de otras fuerzas. La Oficina Internacional de Pesas y Medidas estableció en 1901 una gravedad estándar para la superficie de la Tierra, acorde al Sistema Internacional de Unidades, con un valor fijo de 9,80665 m/s².​",
+   "varios": false
+  }
+ },
+ "ctx:es:michael faraday": {
+  "cuando": 1792819280.0674214,
+  "datos": {
+   "titulo": "Michael Faraday",
+   "texto": "Michael Faraday (/ˈmaɪkəl ˈfæɹəˌdeɪ/; Newington Butts, 22 de septiembre de 1791-Hampton Court, 25 de agosto de 1867) fue un científico británico que estudió el electromagnetismo y la electroquímica. Sus principales descubrimientos incluyen la inducción electromagnética, el diamagnetismo y la electrólisis.\nA pesar de la escasa educación formal recibida, Faraday es uno de los científicos más influyentes de la historia.​ Mediante su estudio del campo magnético alrededor de un conductor por el que circula corriente continua, fijó las bases para el desarrollo del concepto de campo electromagnético. También estableció que el magnetismo podía afectar a los rayos de luz violeta y que había una relación subyacente entre ambos fenómenos.​​ Descubrió asimismo el principio de inducción electromagnética, el diamagnetismo, las leyes de la electrólisis e inventó algo que él llamó dispositivos de rotación electromagnética, que fueron los precursores del actual motor eléctrico.​\nEn el campo de la química, Faraday descubrió el benceno, investigó el clatrato de cloro, inventó un antecesor del mechero de Bunsen, el sistema de números de oxidación e introdujo términos como ánodo, cátodo, electrodo e ion. Finalmente, fue el primero en recibir el título de Profesor Fulleriano de Química en la Royal Institution de Gran Bretaña, que ostentaría hasta su muerte.\nFaraday fue un excelente experimentador, que transmitió sus ideas en un lenguaje claro y simple. Sus habilidades matemáticas, sin embargo, no ",
+   "varios": false
+  }
+ }
+}
