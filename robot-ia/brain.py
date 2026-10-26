@@ -284,7 +284,14 @@ def _extraer_json(texto: str) -> dict:
 
 
 def _clasificar(prompt: str) -> dict:
-    """Gemma (local) decide qué tipo de pedido es. Si se traba o no está, lo decide Groq; si tampoco, "desconocido"."""
+    """
+    Groq decide qué tipo de pedido es (~1 s). Sin internet o si falla, Gemma (local); si tampoco, "desconocido".
+    26/10/2026: Gemma iba primero, pero a veces se trababa 12 s (ReadTimeout) y al final decidía Groq igual.
+    """
+    respuesta = nube.clasificar(prompt)
+    if respuesta is not None:
+        return respuesta
+    print("⚠️  Groq no clasificó: decide Gemma", flush=True)
     try:
         # num_predict: en modo JSON, Gemma a veces se queda generando espacios sin fin y traba a todos los
         # pedidos que vienen detrás. La respuesta real ocupa ~40 tokens.
@@ -297,9 +304,8 @@ def _clasificar(prompt: str) -> dict:
         resp.raise_for_status()
         return _extraer_json(resp.json()["response"])
     except (requests.RequestException, ValueError, KeyError) as e:
-        print(f"⚠️  Gemma no respondió ({type(e).__name__}): decide Groq", flush=True)
-    respaldo = nube.clasificar(prompt)
-    return respaldo if respaldo is not None else {"accion": "desconocido", "parametro": 0}
+        print(f"⚠️  Gemma tampoco respondió ({type(e).__name__})", flush=True)
+    return {"accion": "desconocido", "parametro": 0}
 
 
 def _calcular(pedido: str, expresion_gemma: str, idioma: str) -> str:
@@ -429,7 +435,7 @@ def donde_esta_gemma() -> str:
 
 def preguntar(comando_usuario: str, idioma: str | None = None) -> dict:
     """
-    Envía el comando del usuario a Gemma y devuelve un dict validado:
+    Envía el comando del usuario a Groq (o a Gemma sin internet) y devuelve un dict validado:
     {"accion": str, "parametro": float, "idioma": "es"|"en", "respuesta_hablada": str}
 
     idioma: si viene de Whisper (audio) se usa ese; si es None se detecta del texto.

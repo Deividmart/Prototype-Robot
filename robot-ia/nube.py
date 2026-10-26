@@ -77,12 +77,13 @@ def disponible() -> bool:
     return _leer_clave() is not None
 
 
-def _llamar(mensajes: list[dict], json_salida: bool = False, max_tokens: int = 1500) -> str | None:
+def _llamar(mensajes: list[dict], json_salida: bool = False, max_tokens: int = 1500,
+            temperatura: float = 0.5) -> str | None:
     # max_tokens incluye lo que el modelo "piensa" antes de responder: con poco, la respuesta sale cortada
     clave = _leer_clave()
     if not clave:
         return None
-    cuerpo = {"model": MODELO, "messages": mensajes, "temperature": 0.5, "max_completion_tokens": max_tokens,
+    cuerpo = {"model": MODELO, "messages": mensajes, "temperature": temperatura, "max_completion_tokens": max_tokens,
               "reasoning_effort": "low"}
     if json_salida:
         cuerpo["response_format"] = {"type": "json_object"}
@@ -193,8 +194,9 @@ def plantear_cuenta(texto: str, idioma: str = "es") -> dict | None:
 
 
 def clasificar(prompt: str) -> dict | None:
-    """Respaldo de Gemma: el mismo prompt de brain.py (pide un JSON con la acción)."""
-    respuesta = _llamar([{"role": "user", "content": prompt}], json_salida=True)
+    """Decide la acción con el mismo prompt de brain.py (pide un JSON). Gemma queda de respaldo sin internet."""
+    # Temperatura 0: la misma orden tiene que dar siempre la misma acción
+    respuesta = _llamar([{"role": "user", "content": prompt}], json_salida=True, temperatura=0)
     try:
         datos = json.loads(respuesta) if respuesta else None
     except ValueError:
